@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ChevronDown, Lock, Repeat, Users, UsersRound, X } from "lucide-react";
-import { CATEGORIES, category as categoryOf } from "@/lib/categories";
+import { CATEGORIES, CUSTOM_MAX, category as categoryOf, isPreset, mealForHour } from "@/lib/categories";
 import { formatMoney, paiseToInput, parseMoney, splitByWeights, splitEqually, type SplitRow } from "@/lib/money";
 import { addDays } from "@/lib/dates";
 import { createExpense, updateExpense } from "@/app/actions/expenses";
@@ -16,7 +16,6 @@ import { ReceiptPicker } from "./receipt-picker";
 
 type Mode = "equal" | "exact" | "shares";
 
-const LAST_CATEGORY_KEY = "split:lastCategory";
 
 export function ExpenseForm({
   me,
@@ -40,7 +39,12 @@ export function ExpenseForm({
 
   const [amount, setAmount] = useState(initial ? paiseToInput(initial.amount_paise) : "");
   const [title, setTitle] = useState(initial?.title ?? "");
-  const [cat, setCat] = useState(initial?.category ?? "other");
+  // `cat` is the selected chip; when it's "other", `customCat` holds the typed text.
+  const initialCat = initial?.category ?? "dinner";
+  const [cat, setCat] = useState(isPreset(initialCat) ? initialCat : "other");
+  const [customCat, setCustomCat] = useState(
+    initial && !isPreset(initialCat) ? categoryOf(initialCat).label : "",
+  );
   const [date, setDate] = useState(initial?.expense_date ?? today);
   const [paidBy, setPaidBy] = useState(initial?.paid_by ?? me);
   const [visibility, setVisibility] = useState<Visibility>(initial?.visibility ?? "group");
@@ -75,13 +79,12 @@ export function ExpenseForm({
 
   useEffect(() => {
     if (editing) return;
-    try {
-      const last = localStorage.getItem(LAST_CATEGORY_KEY);
-      // Restore the last-used category after hydration (localStorage isn't available on the server).
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (last && CATEGORIES.some((c) => c.id === last)) setCat(last);
-    } catch {}
+    // Preselect the meal for the phone's local time (not known on the server).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCat(mealForHour(new Date().getHours()));
   }, [editing]);
+
+  const finalCategory = cat === "other" ? customCat.trim().slice(0, CUSTOM_MAX) || "other" : cat;
 
   const amountPaise = parseMoney(amount) ?? 0;
   const isPrivate = visibility === "private";
@@ -118,7 +121,7 @@ export function ExpenseForm({
   function buildPayload(): ExpenseInput | string {
     if (amountPaise <= 0) return "Enter an amount";
     if (uploading) return "Wait for the photo to finish uploading";
-    const finalTitle = title.trim() || categoryOf(cat).label;
+    const finalTitle = title.trim() || categoryOf(finalCategory).label;
     if (!isPrivate) {
       if (splits.length === 0) return "Pick at least one person to split with";
       if (remaining !== 0)
@@ -127,7 +130,7 @@ export function ExpenseForm({
     return {
       group_id: groupId,
       title: finalTitle,
-      category: cat,
+      category: finalCategory,
       amount_paise: amountPaise,
       expense_date: date,
       paid_by: isPrivate ? me : paidBy,
@@ -150,9 +153,6 @@ export function ExpenseForm({
       if (payload === "Enter an amount") amountRef.current?.focus();
       return;
     }
-    try {
-      localStorage.setItem(LAST_CATEGORY_KEY, cat);
-    } catch {}
     start(async () => {
       if (editing && initial) {
         const res = await updateExpense(initial.id, payload);
@@ -209,7 +209,7 @@ export function ExpenseForm({
           <input
             aria-label="What was it for?"
             className="mx-auto mt-2 block w-full max-w-xs rounded-xl bg-transparent px-3 py-2 text-center text-base outline-none placeholder:text-zinc-400 focus:bg-zinc-100 dark:focus:bg-zinc-900"
-            placeholder={`What for? (${categoryOf(cat).label})`}
+            placeholder={`What for? (${categoryOf(finalCategory).label})`}
             maxLength={80}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -217,7 +217,7 @@ export function ExpenseForm({
         </div>
 
         {/* Category */}
-        <div className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div className="flex flex-wrap justify-center gap-2">
           {CATEGORIES.map((c) => (
             <button
               key={c.id}
@@ -231,6 +231,17 @@ export function ExpenseForm({
             </button>
           ))}
         </div>
+        {cat === "other" && (
+          <input
+            aria-label="Category name"
+            autoFocus={!editing}
+            maxLength={CUSTOM_MAX}
+            value={customCat}
+            onChange={(e) => setCustomCat(e.target.value)}
+            placeholder="Type a category, e.g. Milk, Rent, Gas"
+            className="input text-center"
+          />
+        )}
 
         {/* Visibility */}
         <div>
