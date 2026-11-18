@@ -28,15 +28,19 @@ export default async function ExpensePage({ params }: PageProps<"/expenses/[id]"
   if (!data) notFound();
   const e = data as unknown as ExpenseWithSplits;
   const history = (historyData ?? []) as HistoryRow[];
-  const members = await getMembers(e.group_id);
+  const [members, receiptUrl] = await Promise.all([
+    getMembers(e.group_id),
+    e.receipt_path
+      ? supabase.storage
+          .from("receipts")
+          .createSignedUrl(e.receipt_path, 60 * 30)
+          .then((r) => r.data?.signedUrl ?? null)
+      : null,
+  ]);
   const c = category(e.category);
   const payer = members.find((m) => m.id === e.paid_by);
   const isCreator = e.created_by === me;
   const deleted = Boolean(e.deleted_at);
-
-  const receiptUrl = e.receipt_path
-    ? (await supabase.storage.from("receipts").createSignedUrl(e.receipt_path, 60 * 30)).data?.signedUrl
-    : null;
 
   const splits = [...e.expense_splits].sort((a, b) =>
     a.user_id === e.paid_by ? -1 : b.user_id === e.paid_by ? 1 : 0,

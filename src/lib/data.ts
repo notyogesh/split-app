@@ -43,9 +43,8 @@ export const getMyGroups = cache(async (): Promise<Group[]> => {
  * name yet or no group.
  */
 export const requireActiveGroup = cache(async (): Promise<Group> => {
-  const profile = await getMyProfile();
+  const [profile, groups] = await Promise.all([getMyProfile(), getMyGroups()]);
   if (!profile.name) redirect("/onboarding");
-  const groups = await getMyGroups();
   if (groups.length === 0) redirect("/onboarding");
   const wanted = (await cookies()).get(ACTIVE_GROUP_COOKIE)?.value;
   return groups.find((g) => g.id === wanted) ?? groups[0];
