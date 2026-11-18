@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { useSupabase } from "@/lib/supabase/client";
 
 export function LoginForm({
   next,
@@ -14,6 +14,7 @@ export function LoginForm({
   googleEnabled: boolean;
 }) {
   const router = useRouter();
+  const supabase = useSupabase();
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [step, setStep] = useState<"email" | "code">("email");
@@ -26,7 +27,7 @@ export function LoginForm({
     e.preventDefault();
     setError(null);
     start(async () => {
-      const { error } = await createClient().auth.signInWithOtp({
+      const { error } = await supabase.auth.signInWithOtp({
         email: email.trim().toLowerCase(),
         options: { emailRedirectTo: redirectTo(), shouldCreateUser: true },
       });
@@ -39,7 +40,7 @@ export function LoginForm({
     e.preventDefault();
     setError(null);
     start(async () => {
-      const { error } = await createClient().auth.verifyOtp({
+      const { error } = await supabase.auth.verifyOtp({
         email: email.trim().toLowerCase(),
         token: code.trim(),
         type: "email",
@@ -55,7 +56,7 @@ export function LoginForm({
 
   function google() {
     start(async () => {
-      const { error } = await createClient().auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo: redirectTo() },
       });

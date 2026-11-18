@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Camera, Trash2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { useSupabase } from "@/lib/supabase/client";
 
 const MAX_SIDE = 1280;
 const QUALITY = 0.7;
@@ -35,6 +35,7 @@ export function ReceiptPicker({
   onChange: (path: string | null) => void;
   onUploading: (v: boolean) => void;
 }) {
+  const supabase = useSupabase();
   const input = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -42,11 +43,10 @@ export function ReceiptPicker({
 
   useEffect(() => {
     if (!path || preview) return;
-    createClient()
-      .storage.from("receipts")
+    supabase.storage.from("receipts")
       .createSignedUrl(path, 600)
       .then(({ data }) => data && setPreview(data.signedUrl));
-  }, [path, preview]);
+  }, [path, preview, supabase]);
 
   async function pick(file: File | undefined) {
     if (!file) return;
@@ -57,8 +57,8 @@ export function ReceiptPicker({
       const blob = await compress(file);
       const ext = blob.type === "image/webp" ? "webp" : "jpg";
       const newPath = `${me}/${crypto.randomUUID()}.${ext}`;
-      const { error } = await createClient()
-        .storage.from("receipts")
+      const { error } = await supabase.storage
+        .from("receipts")
         .upload(newPath, blob, { contentType: blob.type, upsert: false });
       if (error) throw error;
       setPreview(URL.createObjectURL(blob));

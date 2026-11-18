@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ChevronRight, Repeat } from "lucide-react";
 import { getMembers, getMyProfile, requireActiveGroup, requireUserId } from "@/lib/data";
 import { Avatar } from "@/components/avatar";
+import { siteUrl, vapidPublicKey } from "@/lib/env";
 import { signOut } from "@/app/actions/account";
 import { InviteCard, NewGroupForm, NotificationToggle, ProfileForm } from "./settings-forms";
 
@@ -12,7 +13,7 @@ export default async function SettingsPage() {
   const [me, profile, group] = await Promise.all([requireUserId(), getMyProfile(), requireActiveGroup()]);
   const members = await getMembers(group.id);
   const isAdmin = members.find((m) => m.id === me)?.role === "admin";
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const site = siteUrl();
 
   return (
     <main className="pt-safe space-y-6 px-4 pt-4">
@@ -48,7 +49,7 @@ export default async function SettingsPage() {
           <span className="flex-1 font-medium">Recurring expenses</span>
           <ChevronRight className="size-5 text-zinc-400" />
         </Link>
-        <NotificationToggle vapidKey={process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? ""} />
+        <NotificationToggle vapidKey={vapidPublicKey()} />
       </section>
 
       <section>

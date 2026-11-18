@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { googleLoginEnabled } from "@/lib/env";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Sign in" };
@@ -16,7 +17,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
         <h1 className="text-2xl font-bold">Split</h1>
         <p className="mt-1 text-sm text-zinc-500">Shared expenses for your flat, without the awkward maths.</p>
       </div>
-      <LoginForm next={next} initialError={error} googleEnabled={process.env.NEXT_PUBLIC_ENABLE_GOOGLE === "true"} />
+      <LoginForm next={next} initialError={error} googleEnabled={googleLoginEnabled()} />
     </main>
   );
 }

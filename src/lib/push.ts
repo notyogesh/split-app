@@ -1,12 +1,13 @@
 import "server-only";
 import { sendNotification, setVapidDetails } from "web-push";
 import { createAdminClient } from "@/lib/supabase/server";
+import { vapidPublicKey } from "@/lib/env";
 
 export type PushMessage = { title: string; body: string; url: string; tag?: string };
 
 let configured = false;
 function configure() {
-  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const pub = vapidPublicKey();
   const priv = process.env.VAPID_PRIVATE_KEY;
   if (!pub || !priv) return false;
   if (!configured) {
@@ -17,7 +18,7 @@ function configure() {
 }
 
 export function pushEnabled() {
-  return Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY);
+  return Boolean(vapidPublicKey() && process.env.VAPID_PRIVATE_KEY);
 }
 
 /** Best effort: never throws. Removes subscriptions the browser has revoked. */

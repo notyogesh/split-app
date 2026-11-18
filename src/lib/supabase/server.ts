@@ -2,13 +2,14 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { supabasePublishableKey, supabaseSecretKey, supabaseUrl } from "@/lib/env";
 
 /** Supabase client acting as the signed-in user (RLS applies). */
 export async function createClient() {
   const cookieStore = await cookies();
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    supabaseUrl(),
+    supabasePublishableKey(),
     {
       cookies: {
         getAll() {
@@ -33,9 +34,9 @@ export async function createClient() {
  * reading other people's push subscriptions. Never pass its results to the client.
  */
 export function createAdminClient() {
-  const key = process.env.SUPABASE_SECRET_KEY;
+  const key = supabaseSecretKey();
   if (!key) return null;
-  return createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, key, {
+  return createSupabaseClient(supabaseUrl(), key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 }

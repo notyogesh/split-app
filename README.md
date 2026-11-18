@@ -74,10 +74,13 @@ npm run dev
 ### 3. Deploy to Vercel
 
 1. Push this repository to GitHub, then go to [vercel.com/new](https://vercel.com/new) and import it.
-2. Add every variable from `.env.example` under **Settings → Environment Variables**:
-   - Set `NEXT_PUBLIC_SITE_URL` to your Vercel URL.
-   - Set `CRON_SECRET` to a long random string.
-3. Deploy. `vercel.json` registers the daily recurring-expense job (00:30 UTC = 6:00 IST). The Hobby plan allows one run per day, which is all this needs.
+2. Connect the **Supabase integration** (Vercel → Storage). It creates `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` and `SUPABASE_SECRET_KEY`, which this app reads directly.
+3. Under **Settings → Environment Variables**, add:
+   - `CRON_SECRET`: a long random string.
+   - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`: optional, for push notifications.
+
+   No variable uses the `NEXT_PUBLIC_` prefix. Everything is read on the server, and the public Supabase URL and key are passed to the browser at runtime. Invite links use Vercel's production domain automatically; set `SITE_URL` only to override it.
+4. Deploy. `vercel.json` registers the daily recurring-expense job (00:30 UTC = 6:00 IST). The Hobby plan allows one run per day, which is all this needs.
 
 ### 4. Invite the flat
 
