@@ -12,7 +12,7 @@ export async function GET(_: Request, ctx: RouteContext<"/icons/[size]">) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#059669",
+          background: "linear-gradient(135deg, #f43f5e, #ec4899)",
           color: "white",
           fontSize: size * 0.55,
           fontWeight: 800,

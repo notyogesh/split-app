@@ -11,7 +11,7 @@ export default async function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center px-5 py-10">
       <div className="mb-8 text-center">
-        <div className="mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl bg-brand-600 text-3xl font-extrabold text-white shadow-lg shadow-brand-600/30">
+        <div className="glow mx-auto mb-4 flex size-16 items-center justify-center rounded-2xl text-3xl font-extrabold">
           ₹
         </div>
         <h1 className="text-2xl font-bold">Split</h1>

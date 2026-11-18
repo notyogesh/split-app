@@ -188,8 +188,9 @@ export function ExpenseForm({
       <div className="flex-1 space-y-5 px-4 pb-32">
         {/* Amount */}
         <div className="pt-2 text-center">
-          <div className="inline-flex items-baseline gap-1">
-            <span className="text-3xl font-semibold text-zinc-400">₹</span>
+          {/* Label so tapping the ₹ also focuses the field; input width hugs the digits so ₹ sits right next to them. */}
+          <label className="inline-flex cursor-text items-baseline justify-center gap-1">
+            <span className={`text-3xl font-semibold ${amountPaise > 0 ? "text-brand-500" : "text-zinc-400"}`}>₹</span>
             <input
               ref={amountRef}
               aria-label="Amount"
@@ -201,9 +202,10 @@ export function ExpenseForm({
                 const v = e.target.value.replace(/[^\d.]/g, "");
                 if (/^\d{0,8}(\.\d{0,2})?$/.test(v)) setAmount(v);
               }}
-              className="w-48 bg-transparent text-center text-5xl font-bold tracking-tight outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-700"
+              style={{ width: `${Math.max(amount.length, 1) + 0.25}ch` }}
+              className="max-w-[75vw] bg-transparent text-left text-5xl font-bold tabular-nums outline-none placeholder:text-zinc-300 dark:placeholder:text-zinc-700"
             />
-          </div>
+          </label>
           <input
             aria-label="What was it for?"
             className="mx-auto mt-2 block w-full max-w-xs rounded-xl bg-transparent px-3 py-2 text-center text-base outline-none placeholder:text-zinc-400 focus:bg-zinc-100 dark:focus:bg-zinc-900"
@@ -275,7 +277,7 @@ export function ExpenseForm({
             <div>
               <div className="mb-1.5 flex items-center justify-between">
                 <span className="label mb-0">Split</span>
-                {mode !== "exact" && (
+                {mode !== "exact" && members.length > 1 && (
                 <button
                   type="button"
                   className="text-xs font-medium text-brand-600"

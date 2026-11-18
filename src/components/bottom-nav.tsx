@@ -26,7 +26,7 @@ export function BottomNav() {
                 <Link
                   href={href}
                   aria-label="Add expense"
-                  className="-mt-6 flex size-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg shadow-brand-600/30 active:scale-95"
+                  className="glow -mt-6 flex size-14 items-center justify-center rounded-full active:scale-95"
                 >
                   <Icon className="size-7" strokeWidth={2.5} />
                 </Link>
