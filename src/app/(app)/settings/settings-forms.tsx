@@ -6,11 +6,10 @@ import {
   createGroup,
   removePushSubscription,
   resetInviteCode,
-  savePushSubscription,
   saveProfile,
-  sendTestPush,
 } from "@/app/actions/account";
 import { adminResetPassword, changePassword } from "@/app/actions/auth";
+import { currentSubscription, enablePush, pushSupported } from "@/lib/push-client";
 
 export function ProfileForm({ name, upi }: { name: string; upi: string }) {
   const [state, action, pending] = useActionState(saveProfile, null);
@@ -100,12 +99,6 @@ export function InviteCard({
   );
 }
 
-function urlBase64ToUint8Array(base64: string) {
-  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
-  const raw = atob((base64 + padding).replace(/-/g, "+").replace(/_/g, "/"));
-  return Uint8Array.from([...raw].map((c) => c.charCodeAt(0)));
-}
-
 export function NotificationToggle({ vapidKey }: { vapidKey: string }) {
   const [supported, setSupported] = useState(false);
   const [sub, setSub] = useState<PushSubscription | null>(null);
@@ -113,14 +106,12 @@ export function NotificationToggle({ vapidKey }: { vapidKey: string }) {
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!vapidKey || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
-    navigator.serviceWorker
-      .register("/sw.js", { scope: "/", updateViaCache: "none" })
-      .then((reg) => {
+    if (!vapidKey || !pushSupported()) return;
+    currentSubscription()
+      .then((s) => {
         setSupported(true);
-        return reg.pushManager.getSubscription();
+        setSub(s);
       })
-      .then(setSub)
       .catch(() => setSupported(false));
   }, [vapidKey]);
 
@@ -135,21 +126,9 @@ export function NotificationToggle({ vapidKey }: { vapidKey: string }) {
   function enable() {
     setMsg(null);
     start(async () => {
-      try {
-        const perm = await Notification.requestPermission();
-        if (perm !== "granted") return setMsg("Notifications are blocked in your browser settings.");
-        const reg = await navigator.serviceWorker.ready;
-        const s = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey),
-        });
-        const res = await savePushSubscription(JSON.parse(JSON.stringify(s)));
-        if (!res.ok) return setMsg(res.error);
-        setSub(s);
-        await sendTestPush();
-      } catch {
-        setMsg("Couldn't turn on notifications on this device.");
-      }
+      const res = await enablePush(vapidKey);
+      if (res.ok) setSub(res.sub);
+      else setMsg(res.error);
     });
   }
 

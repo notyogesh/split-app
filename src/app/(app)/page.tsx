@@ -9,6 +9,8 @@ import type { ExpenseWithSplits } from "@/lib/types";
 import { Avatar } from "@/components/avatar";
 import { ExpenseRow } from "@/components/expense-row";
 import { GroupSwitcher } from "@/components/group-switcher";
+import { NotificationPrompt } from "@/components/notification-prompt";
+import { vapidPublicKey } from "@/lib/env";
 import { BalanceActions } from "./balance-actions";
 
 export default async function HomePage() {
@@ -150,6 +152,7 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+      <NotificationPrompt vapidKey={vapidPublicKey()} />
     </main>
   );
 }
