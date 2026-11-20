@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { Bell, BellOff, Copy, RefreshCw, Share2 } from "lucide-react";
+import { Bell, BellOff, Copy, KeyRound, RefreshCw, Share2 } from "lucide-react";
 import {
   createGroup,
   removePushSubscription,
@@ -10,6 +10,7 @@ import {
   saveProfile,
   sendTestPush,
 } from "@/app/actions/account";
+import { adminResetPassword, changePassword } from "@/app/actions/auth";
 
 export function ProfileForm({ name, upi }: { name: string; upi: string }) {
   const [state, action, pending] = useActionState(saveProfile, null);
@@ -185,5 +186,59 @@ export function NewGroupForm() {
       </button>
       {state && !state.ok && <p className="text-sm text-red-600">{state.error}</p>}
     </form>
+  );
+}
+
+export function PasswordForm() {
+  const [state, action, pending] = useActionState(changePassword, null);
+  const [open, setOpen] = useState(false);
+  if (!open)
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="card flex w-full items-center gap-3 p-4 text-left">
+        <KeyRound className="size-5 text-zinc-500" />
+        <span className="flex-1 font-medium">Set or change password</span>
+        {state?.ok && <span className="text-sm text-emerald-600">Updated ✓</span>}
+      </button>
+    );
+  return (
+    <form action={action} className="card space-y-3 p-4">
+      <p className="font-medium">Set or change password</p>
+      <input name="password" type="password" className="input" placeholder="New password (8+ characters)" minLength={8} maxLength={72} required autoComplete="new-password" />
+      <input name="confirm" type="password" className="input" placeholder="Type it again" minLength={8} maxLength={72} required autoComplete="new-password" />
+      {state && !state.ok && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.ok && <p className="text-sm text-emerald-600">Password updated ✓ Use it next time you sign in.</p>}
+      <div className="flex gap-2">
+        <button type="button" className="btn-ghost flex-1" onClick={() => setOpen(false)}>
+          Close
+        </button>
+        <button className="btn-primary flex-1" disabled={pending}>
+          {pending ? "Saving…" : "Save password"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Admin only: set a temporary password for a flatmate who forgot theirs. */
+export function ResetMemberPassword({ memberId, name }: { memberId: string; name: string }) {
+  const [pending, start] = useTransition();
+  return (
+    <button
+      type="button"
+      aria-label={`Reset ${name}'s password`}
+      title="Reset password"
+      disabled={pending}
+      className="rounded-full p-1.5 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+      onClick={() => {
+        const pw = prompt(`New temporary password for ${name} (8+ characters). Tell them, and ask them to change it in Settings.`);
+        if (!pw) return;
+        start(async () => {
+          const res = await adminResetPassword(memberId, pw);
+          alert(res.ok ? `Done. ${name} can now sign in with the new password.` : res.error);
+        });
+      }}
+    >
+      <KeyRound className={`size-4 ${pending ? "animate-pulse" : ""}`} />
+    </button>
   );
 }

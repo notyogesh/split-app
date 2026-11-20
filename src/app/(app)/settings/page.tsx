@@ -5,7 +5,7 @@ import { getMembers, getMyProfile, requireActiveGroup, requireUserId } from "@/l
 import { Avatar } from "@/components/avatar";
 import { siteUrl, vapidPublicKey } from "@/lib/env";
 import { signOut } from "@/app/actions/account";
-import { InviteCard, NewGroupForm, NotificationToggle, ProfileForm } from "./settings-forms";
+import { InviteCard, NewGroupForm, NotificationToggle, PasswordForm, ProfileForm, ResetMemberPassword } from "./settings-forms";
 
 export const metadata: Metadata = { title: "Settings" };
 
@@ -22,6 +22,9 @@ export default async function SettingsPage() {
       <section>
         <h2 className="mb-2 text-sm font-semibold text-zinc-500">You</h2>
         <ProfileForm name={profile.name} upi={profile.upi_id ?? ""} />
+        <div id="password" className="mt-3 scroll-mt-4">
+          <PasswordForm />
+        </div>
       </section>
 
       <section>
@@ -35,6 +38,7 @@ export default async function SettingsPage() {
               </span>
               {m.role === "admin" && <span className="text-xs text-zinc-500">admin</span>}
               {m.upi_id && <span className="text-xs text-emerald-600">UPI ✓</span>}
+              {isAdmin && m.id !== me && <ResetMemberPassword memberId={m.id} name={m.name} />}
             </li>
           ))}
         </ul>
